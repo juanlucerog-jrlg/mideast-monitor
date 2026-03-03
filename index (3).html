@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORIENTE MEDIO INTEL — Noticias en Tiempo Real</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10; --surface: #0d1420; --surface2: #111927; --border: #1e2d40;
+    --accent: #e8412a; --accent2: #f5a623; --accent3: #4a9eff;
+    --text: #c8d8e8; --text-dim: #5a7a95; --text-bright: #eef4fa;
+    --green: #2ecc71; --red: #e74c3c; --yellow: #f39c12;
+    --scan: rgba(74,158,255,0.03);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'IBM Plex Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,var(--scan) 2px,var(--scan) 4px); pointer-events:none; z-index:9999; }
+  body::after { content:''; position:fixed; inset:0; background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px); background-size:40px 40px; opacity:0.2; pointer-events:none; z-index:0; }
+
+  header { position:relative; z-index:10; border-bottom:1px solid var(--border); background:rgba(8,12,16,0.98); padding:0 2rem; }
+  .header-top { display:flex; align-items:center; justify-content:space-between; padding:1rem 0; border-bottom:1px solid var(--border); }
+  .logo-main { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:0.08em; color:var(--text-bright); }
+  .logo-sub { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; color:var(--accent); letter-spacing:0.2em; margin-top:2px; }
+  .header-right { display:flex; align-items:center; gap:1.5rem; }
+  .live-badge { display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:var(--accent); letter-spacing:0.15em; }
+  .live-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; animation:pulse-red 1.5s ease-in-out infinite; }
+  @keyframes pulse-red { 0%,100%{box-shadow:0 0 0 0 rgba(232,65,42,0.6);} 50%{box-shadow:0 0 0 6px rgba(232,65,42,0);} }
+  .clock { font-family:'IBM Plex Mono',monospace; font-size:0.78rem; color:var(--text-dim); }
+
+  .ticker-wrap { display:flex; align-items:center; height:34px; overflow:hidden; }
+  .ticker-label { flex-shrink:0; background:var(--accent); color:white; font-family:'Bebas Neue',sans-serif; font-size:0.82rem; letter-spacing:0.1em; padding:0 1rem; height:100%; display:flex; align-items:center; margin-right:1rem; }
+  .ticker-content { flex:1; overflow:hidden; }
+  .ticker-inner { display:flex; gap:3rem; white-space:nowrap; animation:ticker 80s linear infinite; }
+  .ticker-inner:hover { animation-play-state:paused; }
+  @keyframes ticker { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+  .ticker-item { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; color:var(--text); cursor:pointer; }
+  .ticker-item .src { color:var(--accent2); margin-right:6px; }
+
+  main { position:relative; z-index:5; display:grid; grid-template-columns:260px 1fr 280px; height:calc(100vh - 108px); }
+
+  .sidebar-left { border-right:1px solid var(--border); overflow-y:auto; padding:1.25rem 1rem; display:flex; flex-direction:column; gap:1.5rem; }
+  .panel-title { font-family:'IBM Plex Mono',monospace; font-size:0.58rem; letter-spacing:0.25em; color:var(--accent3); text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:0.5rem; margin-bottom:0.75rem; }
+
+  .threat-meter { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:1rem; }
+  .threat-level { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+  .threat-label { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; color:var(--accent); animation:flicker 3s infinite; }
+  @keyframes flicker { 0%,100%{opacity:1;} 93%{opacity:1;} 94%{opacity:0.4;} 95%{opacity:1;} }
+  .threat-num { font-family:'Bebas Neue',sans-serif; font-size:2.4rem; color:var(--accent); }
+  .threat-bars { display:flex; flex-direction:column; gap:5px; }
+  .threat-bar-row { display:flex; align-items:center; gap:6px; font-family:'IBM Plex Mono',monospace; font-size:0.58rem; color:var(--text-dim); }
+  .threat-bar-row span:first-child { width:58px; flex-shrink:0; }
+  .bar-track { flex:1; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:2px; transition:width 1s ease; }
+
+  .keywords { display:flex; flex-wrap:wrap; gap:5px; }
+  .kw { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; padding:3px 7px; border:1px solid var(--accent3); border-radius:2px; color:var(--accent3); background:rgba(74,158,255,0.08); }
+
+  .source-group-label { font-family:'IBM Plex Mono',monospace; font-size:0.56rem; letter-spacing:0.15em; margin:8px 0 3px 2px; }
+  .source-item { display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--surface); border:1px solid var(--border); border-radius:3px; margin-bottom:4px; font-size:0.73rem; }
+  .source-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .source-dot.online { background:var(--green); animation:pulse-g 2s infinite; }
+  @keyframes pulse-g { 0%,100%{box-shadow:0 0 0 0 rgba(46,204,113,0.5);} 50%{box-shadow:0 0 0 3px rgba(46,204,113,0);} }
+  .source-lang { font-family:'IBM Plex Mono',monospace; font-size:0.55rem; color:var(--text-dim); background:var(--border); padding:1px 4px; border-radius:2px; margin-left:auto; }
+
+  .center-feed { overflow-y:auto; display:flex; flex-direction:column; }
+  .feed-header { position:sticky; top:0; z-index:20; background:rgba(8,12,16,0.97); border-bottom:1px solid var(--border); padding:0.65rem 1.25rem; display:flex; align-items:center; justify-content:space-between; backdrop-filter:blur(10px); }
+  .feed-controls { display:flex; gap:6px; flex-wrap:wrap; }
+  .filter-btn { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; letter-spacing:0.08em; padding:4px 10px; border:1px solid var(--border); background:transparent; color:var(--text-dim); border-radius:2px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .filter-btn:hover { border-color:var(--accent3); color:var(--accent3); }
+  .filter-btn.active { border-color:var(--accent); background:rgba(232,65,42,0.12); color:var(--accent); }
+  .feed-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+  .feed-count { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; color:var(--text-dim); white-space:nowrap; }
+  #refreshBtn { font-family:'IBM Plex Mono',monospace; font-size:0.62rem; padding:4px 10px; border:1px solid var(--accent3); background:transparent; color:var(--accent3); border-radius:2px; cursor:pointer; transition:all 0.2s; }
+  #refreshBtn:hover { background:rgba(74,158,255,0.12); }
+  #refreshBtn:disabled { opacity:0.4; cursor:not-allowed; }
+
+  .news-feed { padding:0.75rem 1.25rem; display:flex; flex-direction:column; gap:0.65rem; }
+
+  .news-card { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:0.9rem 1.1rem; transition:all 0.2s; position:relative; overflow:hidden; animation:slideIn 0.35s ease forwards; opacity:0; }
+  @keyframes slideIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+  .news-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .news-card.critical::before { background:var(--accent); }
+  .news-card.high::before { background:var(--yellow); }
+  .news-card.medium::before { background:var(--accent3); }
+  .news-card:hover { border-color:var(--accent3); background:var(--surface2); transform:translateX(2px); }
+
+  .card-top { display:flex; align-items:flex-start; gap:8px; margin-bottom:5px; }
+  .card-priority { flex-shrink:0; font-family:'Bebas Neue',sans-serif; font-size:0.65rem; letter-spacing:0.1em; padding:2px 5px; border-radius:2px; margin-top:2px; }
+  .card-priority.critical { background:var(--accent); color:white; }
+  .card-priority.high { background:var(--yellow); color:#111; }
+  .card-title { font-size:0.88rem; color:var(--text-bright); line-height:1.4; font-weight:700; flex:1; }
+  .card-title a { color:inherit; text-decoration:none; }
+  .card-title a:hover { color:var(--accent3); text-decoration:underline; }
+  .card-meta { display:flex; align-items:center; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:0.6rem; color:var(--text-dim); margin-bottom:5px; flex-wrap:wrap; }
+  .card-source { color:var(--accent2); }
+  .card-desc { font-size:0.76rem; color:var(--text); line-height:1.55; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .card-tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; }
+  .tag { font-family:'IBM Plex Mono',monospace; font-size:0.52rem; padding:2px 5px; border:1px solid var(--border); border-radius:2px; color:var(--text-dim); }
+  .tag.iran { border-color:rgba(232,65,42,0.5); color:rgba(232,65,42,0.85); }
+  .tag.israel { border-color:rgba(74,158,255,0.5); color:rgba(74,158,255,0.85); }
+  .tag.usa { border-color:rgba(245,166,35,0.5); color:rgba(245,166,35,0.85); }
+  .tag.russia { border-color:rgba(231,76,60,0.5); color:rgba(231,76,60,0.85); }
+
+  .loading-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:4rem 2rem; gap:1rem; }
+  .spinner-big { width:40px; height:40px; border:3px solid var(--border); border-top-color:var(--accent3); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+  .loading-text { font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--text-dim); letter-spacing:0.1em; text-align:center; line-height:1.8; }
+
+  .error-state { padding:2rem 1.5rem; background:var(--surface); border:1px solid rgba(232,65,42,0.3); border-radius:4px; margin:1rem; }
+  .error-state h3 { font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--accent); margin-bottom:0.5rem; }
+  .error-state p { font-size:0.78rem; color:var(--text-dim); line-height:1.6; }
+
+  .sidebar-right { border-left:1px solid var(--border); overflow-y:auto; padding:1.25rem 1rem; display:flex; flex-direction:column; gap:1.5rem; }
+  .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .stat-box { background:var(--surface); border:1px solid var(--border); border-radius:3px; padding:0.65rem; text-align:center; }
+  .stat-number { font-family:'Bebas Neue',sans-serif; font-size:1.7rem; line-height:1; margin-bottom:2px; }
+  .stat-label { font-family:'IBM Plex Mono',monospace; font-size:0.52rem; color:var(--text-dim); letter-spacing:0.1em; text-transform:uppercase; }
+
+  .timeline { display:flex; flex-direction:column; }
+  .tl-item { display:flex; gap:8px; padding:7px 0; position:relative; }
+  .tl-item:not(:last-child)::after { content:''; position:absolute; left:5px; top:18px; bottom:0; width:1px; background:var(--border); }
+  .tl-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; margin-top:2px; border:2px solid; }
+  .tl-dot.critical { border-color:var(--accent); background:rgba(232,65,42,0.3); }
+  .tl-dot.high { border-color:var(--yellow); background:rgba(243,156,18,0.2); }
+  .tl-dot.medium { border-color:var(--accent3); background:transparent; }
+  .tl-time { font-family:'IBM Plex Mono',monospace; font-size:0.56rem; color:var(--text-dim); margin-bottom:1px; }
+  .tl-text { font-size:0.7rem; color:var(--text); line-height:1.3; }
+
+  .entity-row { display:flex; align-items:center; gap:7px; padding:5px 0; border-bottom:1px solid var(--border); font-size:0.72rem; }
+  .entity-row:last-child { border-bottom:none; }
+  .entity-name { flex:1; color:var(--text); }
+  .entity-bar-wrap { width:70px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .entity-bar { height:100%; border-radius:2px; }
+  .entity-count { font-family:'IBM Plex Mono',monospace; font-size:0.58rem; color:var(--text-dim); width:22px; text-align:right; }
+
+  .new-alert { position:fixed; top:115px; right:1.5rem; z-index:100; background:var(--accent); color:white; font-family:'IBM Plex Mono',monospace; font-size:0.68rem; padding:7px 14px; border-radius:3px; cursor:pointer; display:none; letter-spacing:0.1em; }
+
+  ::-webkit-scrollbar { width:3px; }
+  ::-webkit-scrollbar-track { background:var(--bg); }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  @media (max-width:900px) { main{grid-template-columns:1fr;} .sidebar-left,.sidebar-right{display:none;} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="logo-main">ORIENTE MEDIO INTEL</div>
+      <div class="logo-sub">Monitor Multilateral · Noticias Reales · Irán · Israel · EEUU · Aliados</div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><div class="live-dot"></div>EN VIVO</div>
+      <div class="clock" id="clock">--:--:-- UTC</div>
+    </div>
+  </div>
+  <div class="ticker-wrap">
+    <div class="ticker-label">BREAKING</div>
+    <div class="ticker-content">
+      <div class="ticker-inner" id="ticker">
+        <span class="ticker-item"><span class="src">[CONECTANDO]</span>Obteniendo noticias reales...</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="new-alert" id="newAlert" onclick="this.style.display='none'">▲ NUEVAS NOTICIAS — CLICK PARA VER</div>
+
+<main>
+  <aside class="sidebar-left">
+    <div class="threat-meter">
+      <div class="panel-title">Índice de Tensión Regional</div>
+      <div class="threat-level">
+        <div>
+          <div class="threat-label">CRÍTICO</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.56rem;color:var(--text-dim)">BASADO EN NOTICIAS REALES</div>
+        </div>
+        <div class="threat-num" id="threatNum">--</div>
+      </div>
+      <div class="threat-bars">
+        <div class="threat-bar-row"><span>IRÁN-US</span><div class="bar-track"><div class="bar-fill" id="bar1" style="background:var(--accent)"></div></div><span id="bar1v">--</span></div>
+        <div class="threat-bar-row"><span>IRÁN-ISR</span><div class="bar-track"><div class="bar-fill" id="bar2" style="background:var(--red)"></div></div><span id="bar2v">--</span></div>
+        <div class="threat-bar-row"><span>HEZBOLLAH</span><div class="bar-track"><div class="bar-fill" id="bar3" style="background:var(--yellow)"></div></div><span id="bar3v">--</span></div>
+        <div class="threat-bar-row"><span>HOUTHIS</span><div class="bar-track"><div class="bar-fill" id="bar4" style="background:var(--accent3)"></div></div><span id="bar4v">--</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-title">Fuentes Monitoreadas</div>
+      <div id="sourcesList"></div>
+    </div>
+    <div>
+      <div class="panel-title">Palabras Clave Activas</div>
+      <div class="keywords" id="keywords"></div>
+    </div>
+  </aside>
+
+  <section class="center-feed">
+    <div class="feed-header">
+      <div class="feed-controls">
+        <button class="filter-btn active" onclick="filterFeed('all',this)">TODOS</button>
+        <button class="filter-btn" onclick="filterFeed('critical',this)">CRÍTICOS</button>
+        <button class="filter-btn" onclick="filterFeed('iran',this)">IRÁN</button>
+        <button class="filter-btn" onclick="filterFeed('israel',this)">ISRAEL</button>
+        <button class="filter-btn" onclick="filterFeed('usa',this)">EEUU</button>
+        <button class="filter-btn" onclick="filterFeed('russia',this)">RUSIA</button>
+      </div>
+      <div class="feed-right">
+        <div class="feed-count" id="feedCount">Conectando...</div>
+        <button id="refreshBtn" onclick="fetchNews()">⟳ REFRESH</button>
+      </div>
+    </div>
+    <div class="news-feed" id="newsFeed">
+      <div class="loading-state">
+        <div class="spinner-big"></div>
+        <div class="loading-text">CONECTANDO CON FUENTES REALES...<br>Reuters · AP · BBC · Al Jazeera</div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="sidebar-right">
+    <div>
+      <div class="panel-title">Estadísticas en Vivo</div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-number" style="color:var(--accent)" id="statTotal">0</div><div class="stat-label">Artículos</div></div>
+        <div class="stat-box"><div class="stat-number" style="color:var(--red)" id="statCritical">0</div><div class="stat-label">Críticos</div></div>
+        <div class="stat-box"><div class="stat-number" style="color:var(--yellow)" id="statSources">0</div><div class="stat-label">Fuentes</div></div>
+        <div class="stat-box"><div class="stat-number" style="color:var(--accent3)" id="statUpdated">--</div><div class="stat-label">Min Ago</div></div>
+      </div>
+    </div>
+    <div>
+      <div class="panel-title">Últimos Eventos</div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+    <div>
+      <div class="panel-title">Entidades Mencionadas</div>
+      <div id="entityMap"></div>
+    </div>
+  </aside>
+</main>
+
+<script>
+const GNEWS_KEY = '42801e1f9a7f05104ed6718e8f0100f7';
+const BASE = 'https://gnews.io/api/v4/search';
+
+// Búsquedas que cubren distintas perspectivas del conflicto
+const QUERIES = [
+  { q: 'Iran Israel attack strike',         tags: ['iran','israel'] },
+  { q: 'Iran United States sanctions',      tags: ['iran','usa'] },
+  { q: 'Iran nuclear uranium IAEA',         tags: ['iran'] },
+  { q: 'Israel IDF Hezbollah Gaza',         tags: ['israel'] },
+  { q: 'Houthis Yemen Red Sea',             tags: ['iran','usa'] },
+  { q: 'Iran Russia China Middle East',     tags: ['iran','russia'] },
+  { q: 'Persian Gulf Hormuz military',      tags: ['iran','usa'] },
+];
+
+const CRITICAL_WORDS = ['attack','strike','bomb','explosion','war','launch','killed','airstrike','ballistic','nuclear weapon','warfare','invaded'];
+const HIGH_WORDS    = ['sanction','military','threat','deploy','warship','drone','escalat','troops','missile','weapons'];
+
+const SOURCES_LIST = [
+  {name:'Reuters',lang:'EN',group:'occ'},{name:'AP News',lang:'EN',group:'occ'},
+  {name:'BBC World',lang:'EN',group:'occ'},{name:'CNN',lang:'EN',group:'occ'},
+  {name:'Fox News',lang:'EN',group:'occ'},{name:'Al Jazeera',lang:'AR/EN',group:'arab'},
+  {name:'Al Arabiya',lang:'AR',group:'arab'},{name:'France24',lang:'EN/AR',group:'arab'},
+  {name:'Haaretz',lang:'HE/EN',group:'isr'},{name:'Times of Israel',lang:'EN',group:'isr'},
+  {name:'Jerusalem Post',lang:'EN',group:'isr'},{name:'Iran International',lang:'FA/EN',group:'irop'},
+  {name:'Press TV',lang:'EN',group:'irof'},{name:'Tasnim News',lang:'FA/EN',group:'irof'},
+  {name:'RT Internacional',lang:'ES',group:'rus'},{name:'TASS',lang:'EN',group:'rus'},
+  {name:'Sputnik',lang:'ES',group:'rus'},{name:'CGTN',lang:'EN',group:'chn'},
+];
+
+const GROUP_INFO = {
+  occ: {label:'🌐 Occidentales',color:'#4a9eff'},
+  arab:{label:'🌙 Árabes',color:'#f5a623'},
+  isr: {label:'🇮🇱 Israelíes',color:'#2ecc71'},
+  irop:{label:'📡 Irán Opositores',color:'#f5a623'},
+  irof:{label:'🇮🇷 Irán Oficial',color:'#e8412a'},
+  rus: {label:'🇷🇺 Rusia',color:'#e74c3c'},
+  chn: {label:'🇨🇳 China',color:'#e74c3c'},
+};
+
+const KEYWORDS = ['Irán','Israel','Nuclear','Misil','IRGC','IDF','Hezbollah','Hamas','Houthis','Sanción','Gaza','Líbano','Yemen','Hormuz','Mossad'];
+
+let allArticles = [];
+let currentFilter = 'all';
+let lastFetch = null;
+
+// ── FETCH ──────────────────────────────────────
+async function fetchNews() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = '⟳ BUSCANDO...';
+
+  document.getElementById('newsFeed').innerHTML = `
+    <div class="loading-state">
+      <div class="spinner-big"></div>
+      <div class="loading-text">OBTENIENDO NOTICIAS REALES...<br>Conectando con GNews API</div>
+    </div>`;
+
+  try {
+    // GNews plan gratuito: 10 req/día — hacemos 4 búsquedas clave
+    const selectedQueries = [QUERIES[0], QUERIES[1], QUERIES[3], QUERIES[4]];
+
+    const results = await Promise.allSettled(
+      selectedQueries.map(q =>
+        fetch(`${BASE}?q=${encodeURIComponent(q.q)}&lang=en&max=10&sortby=publishedAt&token=${GNEWS_KEY}`)
+          .then(r => r.json())
+          .then(data => ({ data, query: q }))
+      )
+    );
+
+    const seen = new Set();
+    const articles = [];
+
+    results.forEach(result => {
+      if (result.status !== 'fulfilled') return;
+      const { data, query } = result.value;
+      if (!data.articles) return;
+
+      data.articles.forEach(art => {
+        if (!art.title || !art.url) return;
+        if (seen.has(art.url)) return;
+        seen.add(art.url);
+
+        const text = (art.title + ' ' + (art.description || '')).toLowerCase();
+        const priority = CRITICAL_WORDS.some(w => text.includes(w)) ? 'critical'
+          : HIGH_WORDS.some(w => text.includes(w)) ? 'high' : 'medium';
+
+        const tags = [...query.tags];
+        if (text.includes('russia') || text.includes('moscow') || text.includes('china')) tags.push('russia');
+        if (text.includes('hamas') || text.includes('gaza')) { if (!tags.includes('israel')) tags.push('israel'); }
+
+        articles.push({
+          id: art.url,
+          title: art.title,
+          description: art.description || '',
+          url: art.url,
+          source: art.source?.name || 'Unknown',
+          publishedAt: art.publishedAt,
+          priority,
+          tags: [...new Set(tags)],
+        });
+      });
+    });
+
+    // Orden: más reciente primero
+    articles.sort((a,b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+
+    const prevCount = allArticles.length;
+    allArticles = articles;
+    lastFetch = new Date();
+
+    renderFeed();
+    updateTicker();
+    updateStats();
+    updateTimeline();
+    updateEntities();
+    updateThreatBars();
+
+    if (prevCount > 0) document.getElementById('newAlert').style.display = 'block';
+
+    const fc = document.getElementById('feedCount');
+    fc.style.color = 'var(--green)';
+    fc.textContent = `${articles.length} noticias reales · Ahora`;
+    setTimeout(() => { fc.style.color=''; renderFeed(); }, 2500);
+
+  } catch(err) {
+    document.getElementById('newsFeed').innerHTML = `
+      <div class="error-state">
+        <h3>⚠ ERROR AL OBTENER NOTICIAS</h3>
+        <p>No se pudo conectar con GNews.<br><br>
+        Error: ${err.message}<br><br>
+        Intenta de nuevo con el botón REFRESH.</p>
+      </div>`;
+    document.getElementById('feedCount').textContent = 'Error — intenta de nuevo';
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⟳ REFRESH';
+}
+
+// ── RENDER ─────────────────────────────────────
+function renderFeed() {
+  const feed = document.getElementById('newsFeed');
+  let data = allArticles;
+  if (currentFilter === 'critical') data = data.filter(a => a.priority === 'critical');
+  else if (currentFilter !== 'all') data = data.filter(a => a.tags.includes(currentFilter));
+
+  if (!data.length) {
+    feed.innerHTML = `<div class="loading-state"><div class="loading-text">Sin resultados para este filtro</div></div>`;
+    return;
+  }
+
+  feed.innerHTML = data.map((a,i) => `
+    <div class="news-card ${a.priority}" style="animation-delay:${Math.min(i*0.04,0.6)}s">
+      <div class="card-top">
+        ${a.priority==='critical'?'<span class="card-priority critical">⚠ CRÍTICO</span>':a.priority==='high'?'<span class="card-priority high">▲ ALTO</span>':''}
+        <div class="card-title"><a href="${a.url}" target="_blank" rel="noopener">${a.title}</a></div>
+      </div>
+      <div class="card-meta">
+        <span class="card-source">${a.source}</span>
+        <span>${timeAgo(a.publishedAt)}</span>
+        <span style="color:var(--accent3);font-size:0.55rem">↗ LEER NOTA COMPLETA</span>
+      </div>
+      ${a.description ? `<div class="card-desc">${a.description}</div>` : ''}
+      <div class="card-tags">${a.tags.map(t=>`<span class="tag ${t}">${t.toUpperCase()}</span>`).join('')}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('feedCount').textContent =
+    `${data.length} noticias reales · ${lastFetch ? timeAgo(lastFetch.toISOString()) : '--'}`;
+}
+
+function updateTicker() {
+  const ticker = document.getElementById('ticker');
+  if (!allArticles.length) return;
+  const items = allArticles.slice(0,20);
+  const doubled = [...items,...items];
+  ticker.innerHTML = doubled.map(a =>
+    `<span class="ticker-item" onclick="window.open('${a.url}','_blank')">
+      <span class="src">[${(a.source||'').toUpperCase().substring(0,12)}]</span>${a.title}
+    </span>`
+  ).join('');
+}
+
+function updateStats() {
+  const sources = new Set(allArticles.map(a=>a.source)).size;
+  const critical = allArticles.filter(a=>a.priority==='critical').length;
+  animateNum('statTotal', allArticles.length);
+  animateNum('statCritical', critical);
+  animateNum('statSources', sources);
+  document.getElementById('statUpdated').textContent = '0';
+}
+
+function updateTimeline() {
+  const el = document.getElementById('timeline');
+  const items = allArticles.filter(a=>a.priority==='critical'||a.priority==='high').slice(0,8);
+  el.innerHTML = items.map(a=>`
+    <div class="tl-item">
+      <div class="tl-dot ${a.priority}"></div>
+      <div>
+        <div class="tl-time">${timeAgo(a.publishedAt)} · ${a.source}</div>
+        <div class="tl-text"><a href="${a.url}" target="_blank" style="color:inherit;text-decoration:none">${a.title.substring(0,72)}${a.title.length>72?'...':''}</a></div>
+      </div>
+    </div>`).join('');
+}
+
+function updateEntities() {
+  const el = document.getElementById('entityMap');
+  const ents = {
+    'IRGC':['irgc','revolutionary guard'],
+    'IDF':['idf','israeli army','israeli forces'],
+    'Netanyahu':['netanyahu'],
+    'Khamenei':['khamenei','supreme leader'],
+    'Pentagon':['pentagon','us military'],
+    'Hezbollah':['hezbollah'],
+    'Hamas':['hamas'],
+    'Houthis':['houthi'],
+    'Mossad':['mossad'],
+    'IAEA':['iaea','nuclear watchdog'],
+  };
+  const counts = {};
+  allArticles.forEach(a => {
+    const text = (a.title+' '+a.description).toLowerCase();
+    Object.entries(ents).forEach(([name,kws])=>{
+      if (kws.some(kw=>text.includes(kw))) counts[name]=(counts[name]||0)+1;
+    });
+  });
+  const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max = sorted[0]?.[1]||1;
+  const colors = {IRGC:'var(--accent)',IDF:'var(--accent3)',Pentagon:'var(--yellow)',Hezbollah:'var(--accent)',Hamas:'var(--text-dim)',Houthis:'var(--accent3)',Netanyahu:'var(--accent3)',Khamenei:'var(--accent)',Mossad:'var(--green)',IAEA:'var(--yellow)'};
+  el.innerHTML = sorted.length
+    ? sorted.map(([name,count])=>`
+      <div class="entity-row">
+        <span class="entity-name">${name}</span>
+        <div class="entity-bar-wrap"><div class="entity-bar" style="width:${Math.round(count/max*100)}%;background:${colors[name]||'var(--text-dim)'}"></div></div>
+        <span class="entity-count">${count}</span>
+      </div>`).join('')
+    : '<div style="font-family:\'IBM Plex Mono\',monospace;font-size:0.65rem;color:var(--text-dim);padding:0.5rem 0">Cargando datos...</div>';
+}
+
+function updateThreatBars() {
+  const total = allArticles.length||1;
+  const pct = n => Math.min(99,Math.max(5,Math.round(n/total*100*2.5)));
+  const p1=pct(allArticles.filter(a=>a.tags.includes('iran')&&a.tags.includes('usa')).length);
+  const p2=pct(allArticles.filter(a=>a.tags.includes('iran')&&a.tags.includes('israel')).length);
+  const p3=pct(allArticles.filter(a=>(a.title+a.description).toLowerCase().includes('hezbollah')).length);
+  const p4=pct(allArticles.filter(a=>(a.title+a.description).toLowerCase().includes('houthi')).length);
+  document.getElementById('threatNum').textContent=Math.round((p1+p2+p3+p4)/4);
+  ['bar1','bar2','bar3','bar4'].forEach((id,i)=>{
+    const v=[p1,p2,p3,p4][i];
+    document.getElementById(id).style.width=v+'%';
+    document.getElementById(id+'v').textContent=v;
+  });
+}
+
+function renderSources() {
+  const el = document.getElementById('sourcesList');
+  const groups = {};
+  SOURCES_LIST.forEach(s=>{if(!groups[s.group])groups[s.group]=[];groups[s.group].push(s);});
+  let html='';
+  Object.entries(GROUP_INFO).forEach(([g,info])=>{
+    if(!groups[g])return;
+    html+=`<div class="source-group-label" style="color:${info.color}">${info.label}</div>`;
+    groups[g].forEach(s=>{
+      html+=`<div class="source-item"><div class="source-dot online"></div><span style="flex:1">${s.name}</span><span class="source-lang">${s.lang}</span></div>`;
+    });
+  });
+  el.innerHTML=html;
+}
+
+function renderKeywords() {
+  document.getElementById('keywords').innerHTML=KEYWORDS.map(kw=>`<span class="kw">${kw}</span>`).join('');
+}
+
+function filterFeed(filter,btn) {
+  currentFilter=filter;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeed();
+}
+
+function timeAgo(iso) {
+  if(!iso)return'--';
+  const diff=(Date.now()-new Date(iso))/1000;
+  if(diff<120)return'hace 1 min';
+  if(diff<3600)return`hace ${Math.floor(diff/60)} min`;
+  if(diff<86400)return`hace ${Math.floor(diff/3600)}h`;
+  return`hace ${Math.floor(diff/86400)}d`;
+}
+
+function animateNum(id,target) {
+  const el=document.getElementById(id);
+  const start=parseInt(el.textContent)||0;
+  let i=0;
+  const iv=setInterval(()=>{i++;el.textContent=Math.round(start+(target-start)*i/20);if(i>=20)clearInterval(iv);},25);
+}
+
+function updateClock() {
+  document.getElementById('clock').textContent=new Date().toUTCString().split(' ')[4]+' UTC';
+}
+
+function init() {
+  renderSources();
+  renderKeywords();
+  updateClock();
+  setInterval(updateClock,1000);
+  setInterval(()=>{ if(lastFetch) document.getElementById('statUpdated').textContent=Math.floor((Date.now()-lastFetch)/60000); },60000);
+  fetchNews();
+  // Auto-refresh cada 15 min (respeta el límite gratuito de GNews)
+  setInterval(fetchNews, 15*60*1000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
