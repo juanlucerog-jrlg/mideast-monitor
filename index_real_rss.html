@@ -1,0 +1,96 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ORIENTE MEDIO INTEL — RSS Real</title>
+
+<style>
+body {
+    background:#0b0f14;
+    color:#e6edf3;
+    font-family:Arial, sans-serif;
+    margin:0;
+    padding:20px;
+}
+
+h1 {
+    margin-bottom:20px;
+}
+
+.news-card {
+    background:#121922;
+    padding:15px;
+    border-radius:6px;
+    margin-bottom:15px;
+    border-left:4px solid #4a9eff;
+}
+
+.news-card a {
+    color:#4a9eff;
+    text-decoration:none;
+}
+
+.news-card a:hover {
+    text-decoration:underline;
+}
+
+.meta {
+    font-size:12px;
+    opacity:0.6;
+    margin-bottom:6px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🛰 ORIENTE MEDIO INTEL — Datos Reales</h1>
+<div id="news">Cargando noticias reales...</div>
+
+<script>
+async function loadRSS() {
+    try {
+        const proxy = "https://api.allorigins.win/raw?url=";
+        const rssURL = "https://feeds.reuters.com/reuters/worldNews";
+        
+        const response = await fetch(proxy + encodeURIComponent(rssURL));
+        const text = await response.text();
+
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(text, "text/xml");
+        const items = xml.querySelectorAll("item");
+
+        const container = document.getElementById("news");
+        container.innerHTML = "";
+
+        items.forEach((item, index) => {
+            if (index >= 20) return;
+
+            const title = item.querySelector("title")?.textContent || "";
+            const link = item.querySelector("link")?.textContent || "";
+
+            const card = document.createElement("div");
+            card.className = "news-card";
+
+            card.innerHTML = `
+                <div class="meta">Fuente: Reuters (RSS real)</div>
+                <div><strong>${title}</strong></div>
+                <div><a href="${link}" target="_blank">Leer noticia completa</a></div>
+            `;
+
+            container.appendChild(card);
+        });
+
+    } catch (error) {
+        document.getElementById("news").innerText = "Error cargando noticias.";
+    }
+}
+
+loadRSS();
+setInterval(loadRSS, 300000);
+</script>
+
+</body>
+</html>
